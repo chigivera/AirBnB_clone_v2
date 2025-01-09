@@ -83,7 +83,7 @@ class HBNBCommand(cmd.Cmd):
     def do_create(self, arg):
         """Create a new instance of a class.
         
-        Usage: create <class> <param1> <param2> <param3>...
+        Usage: create <class> <key1>=<value1> <key2>=<value2> ...
         """
         try:
             if not arg:
@@ -97,15 +97,15 @@ class HBNBCommand(cmd.Cmd):
             new_instance = eval(args[0])()
             
             # Handle parameters
+            params_dict = {}
             for param in args[1:]:
-                # Split parameter into key and value
                 if '=' not in param:
                     continue
                 key, value = param.split('=', 1)
                 
-                # Handle string values
-                if value.startswith('"'):
-                    value = value.strip('"').replace('_', ' ')
+                # Remove quotes and handle underscores in strings
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1].replace('_', ' ')
                 # Handle float values
                 elif '.' in value:
                     try:
@@ -119,11 +119,14 @@ class HBNBCommand(cmd.Cmd):
                     except ValueError:
                         continue
                 
-                # Set attribute if it's valid
-                if hasattr(new_instance, key):
-                    setattr(new_instance, key, value)
+                params_dict[key] = value
             
-            new_instance.save()
+            # Set all attributes at once
+            for key, value in params_dict.items():
+                setattr(new_instance, key, value)
+            
+            storage.new(new_instance)
+            storage.save()
             print(new_instance.id)
             
         except SyntaxError:
