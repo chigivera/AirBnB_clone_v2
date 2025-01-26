@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Sets up web servers for web_static deployment
+
+# Install nginx if not installed
+apt-get update
+apt-get -y install nginx
+
+# Create required directories
+mkdir -p /data/web_static/releases/test/
+mkdir -p /data/web_static/shared/
+
+# Create test HTML file
+echo "<html>
+  <head>
+  </head>
+  <body>
+    ALX
+  </body>
+</html>" > /data/web_static/releases/test/index.html
+
+# Create or recreate symbolic link
+rm -rf /data/web_static/current
+ln -sf /data/web_static/releases/test/ /data/web_static/current
+
+# Set ownership
+chown -R ubuntu:ubuntu /data/
+
+# Update Nginx configuration
+config_file="/etc/nginx/sites-available/default"
+if ! grep -q "location /hbnb_static" $config_file; then
+    sed -i '/server_name _;/a\\n\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}' $config_file
+fi
+
+# Restart Nginx
+service nginx restart
